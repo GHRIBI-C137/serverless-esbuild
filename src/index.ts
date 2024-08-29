@@ -221,11 +221,21 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
   }
 
   get functions(): Record<string, Serverless.FunctionDefinitionHandler> {
-    const functions = this.options.function
+    let functions = this.options.function
       ? {
           [this.options.function]: this.serverless.service.getFunction(this.options.function),
         }
       : this.serverless.service.functions;
+
+
+    const includedFuncs = this.serverless.service.custom.esbuild.include
+    const filteredfunction = Object.keys(functions)
+        .filter(key => includedFuncs.includes(key))
+        .reduce((obj, key) => {
+            obj[key] = functions[key];
+            return obj;
+        }, {});
+    functions = filteredfunction
 
     const buildOptions = this.getBuildOptions();
     // ignore all functions with a different runtime than nodejs:
